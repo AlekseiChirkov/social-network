@@ -1,11 +1,13 @@
-from abc import ABC
-
 from rest_framework import serializers
 
 from apps.authentication.models import User
 
 
 class UserCreationSerializer(serializers.ModelSerializer):
+    """
+    Serializer for user registration
+    """
+
     password = serializers.CharField(write_only=True)
     password2 = serializers.CharField(write_only=True)
 
@@ -16,7 +18,13 @@ class UserCreationSerializer(serializers.ModelSerializer):
             "phone", "email", "password", "password2"
         )
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict) -> User:
+        """
+        Method creates validate passwords and creates user if passwords match
+        :param validated_data: dict
+        :return: User
+        """
+
         if validated_data["password"] == validated_data["password2"]:
             user = User.objects.create(
                 username=validated_data["username"],
@@ -31,6 +39,10 @@ class UserCreationSerializer(serializers.ModelSerializer):
 
 
 class UserActivitySerializer(serializers.ModelSerializer):
+    """
+    Serialize user activity data
+    """
+
     user_id = serializers.CharField(source="id")
 
     class Meta:

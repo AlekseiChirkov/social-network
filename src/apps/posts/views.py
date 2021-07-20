@@ -1,20 +1,46 @@
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.generics import CreateAPIView, ListAPIView
+from rest_framework.generics import CreateAPIView, ListAPIView, ListCreateAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
-from apps.posts.models import Post
+from apps.posts.models import Post, Like
 from apps.posts.serializers import (
     PostSerializer, LikeSerializer, LikeAnalyticsSerializer
 )
 from apps.posts.services import LikesAnalyticsService
 
 
-class PostCreateAPIView(CreateAPIView):
-    serializer_class = PostSerializer
-    permission_classes = (IsAuthenticated, )
+class PostListCreateAPIView(ListCreateAPIView):
+    """
+    Class for posts creation
+    """
 
-    def create(self, request, *args, **kwargs):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    permission_classes = (AllowAny, )
+
+    def list(self, request, *args, **kwargs):
+        """
+        Method returns list of posts
+        :param request: WSGIRequest - method and url
+        :param args: other args
+        :param kwargs: other kwargs
+        :return: response with status and data
+        """
+
+        posts = self.queryset.all()
+        serializer = self.serializer_class(posts, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def create(self, request, *args, **kwargs) -> Response:
+        """
+        Methods creates posts objects
+        :param request: WSGIRequest - method and url
+        :param args: other args
+        :param kwargs: other kwargs
+        :return: response with status and data
+        """
+
         user = request.user
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
@@ -24,10 +50,21 @@ class PostCreateAPIView(CreateAPIView):
 
 
 class LikeCreateAPIView(CreateAPIView):
+    """
+    Class for post's likes
+    """
+
     serializer_class = LikeSerializer
     permission_classes = (IsAuthenticated, )
 
-    def create(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs) -> Response:
+        """
+        Method creates like for post
+        :param request: WSGIRequest - method and url
+        :param args: other args
+        :param kwargs: other kwargs
+        :return: response with status and data
+        """
         user = request.user
         try:
             post = Post.objects.get(pk=self.kwargs.get("pk"))
@@ -43,8 +80,17 @@ class LikeCreateAPIView(CreateAPIView):
 
 
 class LikeAnalyticsListAPIView(ListAPIView):
+    """
+    View for likes analytics
+    """
+
     serializer_class = LikeAnalyticsSerializer
     permission_classes = (AllowAny, )
 
-    def get_queryset(self):
+    def get_queryset(self) -> Like:
+        """
+        Method returns Like queryset
+        :return: Like queryset
+        """
+
         return LikesAnalyticsService.get_likes_distinct_by_date(self.request)

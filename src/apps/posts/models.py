@@ -2,6 +2,10 @@ from django.db import models
 
 
 class Post(models.Model):
+    """
+    Model for posts
+    """
+
     creator = models.ForeignKey(
         'authentication.User', on_delete=models.CASCADE, blank=True, null=True
     )
@@ -21,5 +25,9 @@ class Like(models.Model):
     )
     created_date = models.DateField(auto_now_add=True, blank=True, null=True)
 
-    def __str__(self):
-        return self.user.first_name + "'s like"
+    def __str__(self) -> str:
+        """
+        Method returns post's user first name
+        :return: str - user's first name
+        """
+        return f"{self.user}'s post"

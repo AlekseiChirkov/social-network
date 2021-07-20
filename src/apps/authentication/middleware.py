@@ -5,7 +5,16 @@ from apps.authentication.models import User
 
 
 class UpdateLastActivityMiddleware(MiddlewareMixin):
-    def process_view(self, request, *args, **kwargs):
+    @staticmethod
+    def process_view(request, *args, **kwargs) -> None:
+        """
+        Method updates last activity field for User
+        :param request: WSGIRequest - method and url
+        :param args: other arguments
+        :param kwargs: other keyword arguments
+        :return: None
+        """
+
         assert hasattr(request, 'user')
         if request.user.is_authenticated:
             (

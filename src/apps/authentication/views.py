@@ -8,11 +8,19 @@ from apps.authentication.serializers import (
 
 
 class UserCreateAPIView(CreateAPIView):
+    """
+    User registration view extended from generics CreateAPIView
+    """
+
     serializer_class = UserCreationSerializer
     permission_classes = (AllowAny, )
 
 
 class UserActivityListAPIView(ListAPIView):
+    """
+    User activity view extended from generics ListAPIView
+    """
+
     queryset = User.objects.all()
     serializer_class = UserActivitySerializer
     permission_classes = (IsAuthenticated, )
