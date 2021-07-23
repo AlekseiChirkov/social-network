@@ -90,7 +90,7 @@ class Bot:
         characters = string.ascii_letters + string.digits + string.punctuation
         title = ''.join(random.choice(characters) for i in range(16))
         text = ''.join(random.choice(characters) for i in range(64))
-        response = requests.post(
+        requests.post(
             URLs.posts_url, data={'title': title, 'text': text},
             headers={'Authorization': f'Bearer {access_token}'}
         )
@@ -120,7 +120,7 @@ class Bot:
         for i in range(likes):
             chosen_id = random.choice(post_ids)
             url = f'http://localhost:8000/api/posts/{chosen_id}/like/'
-            response = requests.post(
+            requests.post(
                 url, headers={'Authorization': f'Bearer {access_token}'}
             )
 
