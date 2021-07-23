@@ -1,33 +1,36 @@
 import os
 import random
 import string
+from dataclasses import dataclass
 
 import requests
 
 
+@dataclass
 class URLs:
     """
     Class stores urls
     """
 
-    signup_user_url = 'http://localhost:8000/api/users/register/'
-    login_user_url = 'http://localhost:8000/api/users/login/'
-    posts_url = 'http://localhost:8000/api/posts/post/'
+    signup_user_url: str = 'http://localhost:8000/api/users/register/'
+    login_user_url: str = 'http://localhost:8000/api/users/login/'
+    posts_url: str = 'http://localhost:8000/api/posts/post/'
 
 
+@dataclass
 class UsersData:
     """
     Class stores files paths
     """
 
-    usernames = '../assets/usernames.txt'
-    first_names = '../assets/first_names.txt'
-    last_names = '../assets/last_names.txt'
-    emails = '../assets/emails.txt'
-    phones = '../assets/phones.txt'
+    usernames: str = '../assets/usernames.txt'
+    first_names: str = '../assets/first_names.txt'
+    last_names: str = '../assets/last_names.txt'
+    emails: str = '../assets/emails.txt'
+    phones: str = '../assets/phones.txt'
 
 
-class Bot:
+class Bot(UsersData, URLs):
     """
     Class for demonstrate API functionalities
     """
@@ -52,7 +55,7 @@ class Bot:
         """
 
         data = cls._initialize_user_data()
-        requests.post(URLs.signup_user_url, data=data)
+        requests.post(cls.signup_user_url, data=data)
 
     @classmethod
     def login_user(cls) -> list:
@@ -68,7 +71,7 @@ class Bot:
             passwords = [line.split(',')[-1] for line in lines]
             for username, password in zip(usernames, passwords):
                 response = requests.post(
-                    URLs.login_user_url,
+                    cls.login_user_url,
                     data={
                         'username': username,
                         'password': password
@@ -91,7 +94,7 @@ class Bot:
         title = ''.join(random.choice(characters) for i in range(16))
         text = ''.join(random.choice(characters) for i in range(64))
         requests.post(
-            URLs.posts_url, data={'title': title, 'text': text},
+            cls.posts_url, data={'title': title, 'text': text},
             headers={'Authorization': f'Bearer {access_token}'}
         )
 
@@ -102,7 +105,7 @@ class Bot:
         :return: list - posts ids
         """
 
-        response = requests.get(URLs.posts_url)
+        response = requests.get(cls.posts_url)
         posts = response.json()
         posts_ids = [post.get('id') for post in posts]
         return posts_ids
@@ -133,11 +136,11 @@ class Bot:
 
         password = cls._generate_password()
         data = {
-            'username': cls._get_random_element(UsersData.usernames),
-            'email': cls._get_random_element(UsersData.emails),
-            'first_name': cls._get_random_element(UsersData.first_names),
-            'last_name': cls._get_random_element(UsersData.last_names),
-            'phone': cls._get_random_element(UsersData.phones),
+            'username': cls._get_random_element(cls.usernames),
+            'email': cls._get_random_element(cls.emails),
+            'first_name': cls._get_random_element(cls.first_names),
+            'last_name': cls._get_random_element(cls.last_names),
+            'phone': cls._get_random_element(cls.phones),
             'password': password,
             'password2': password,
         }
@@ -188,7 +191,8 @@ class Bot:
         :return: int - count of chosen object
         """
 
-        return int(cls._read_file('../config.csv')[choice_index].split(',')[1].replace('\n', ''))
+        choice = cls._read_file('../config.csv')[choice_index]
+        return int(choice.split(',')[1].replace('\n', ''))
 
     @staticmethod
     def _save_registered_user_into_file(user_data: dict) -> None:
@@ -209,18 +213,21 @@ class Bot:
             file.write(','.join(data) + '\n')
 
 
-if __name__ == '__main__':
-    bot = Bot()
+class Run(Bot):
+    @classmethod
+    def start_process(cls):
+        users, posts, likes = cls.read_config()
+        for i in range(users):
+            cls.register_user()
 
-    users, posts, likes = bot.read_config()
-    for i in range(users):
-        bot.register_user()
+        access_tokens = cls.login_user()
+        for access_token in access_tokens:
+            posts_to_create = random.randint(1, posts)
+            for posts_count in range(posts_to_create):
+                cls.create_post(access_token)
 
-    access_tokens = bot.login_user()
-    for access_token in access_tokens:
-        posts_to_create = random.randint(1, posts)
-        for posts_count in range(posts_to_create):
-            bot.create_post(access_token)
+            posts_ids = cls.get_posts()
+            cls.like_posts_randomly(access_token, posts_ids, likes)
 
-        posts_ids = bot.get_posts()
-        bot.like_posts_randomly(access_token, posts_ids, likes)
+
+Run().start_process()
